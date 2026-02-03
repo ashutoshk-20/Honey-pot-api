@@ -33,7 +33,8 @@ app.post('/message', async (req, res) => {
     try {
         // 1. Process Message with LLM
         const result = await processMessage(message, conversationHistory || [], metadata || {});
-        console.log('LLM Result:', JSON.stringify(result, null, 2));
+
+        const botReply = result.reply || "I'm sorry, I'm a bit confused. Can you explain that again?";
 
         // 2. Track session state
         if (!sessions[sessionId]) {
@@ -53,21 +54,21 @@ app.post('/message', async (req, res) => {
 
         // 3. Decision logic: When to send the final callback?
         if (sessions[sessionId].scamDetected && (result.isFinished || sessions[sessionId].messageCount >= 10)) {
-            console.log(`Triggering finishSession for ${sessionId}`);
-            finishSession(sessionId).catch(console.error);
+            finishSession(sessionId).catch(err => console.error("Callback Error:", err.message));
         }
 
-        // 4. Return response to the platform
-        const responseBody = {
+        // 4. Return response to the platform - Strictly following schema
+        return res.status(200).json({
             status: "success",
-            reply: result.reply
-        };
-        console.log('Response Body:', JSON.stringify(responseBody, null, 2));
-        return res.json(responseBody);
+            reply: botReply
+        });
 
     } catch (error) {
         console.error("Error processing message:", error);
-        return res.status(500).json({ status: "error", message: "Internal server error" });
+        return res.status(200).json({
+            status: "success",
+            reply: "I'm not sure I understand. Could you please clarify?"
+        });
     }
 });
 
