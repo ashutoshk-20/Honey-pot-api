@@ -32,5 +32,4 @@ async function testScamDetection() {
     }
 }
 
-// Ensure the server is running before executing this
 testScamDetection();

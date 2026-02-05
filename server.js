@@ -7,8 +7,12 @@ const { processMessage, extractIntelligence } = require('./llmService');
 const app = express();
 app.use(bodyParser.json());
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 const SECRET_API_KEY = process.env.SECRET_API_KEY;
+
+if (!process.env.GEMINI_API_KEY || !process.env.SECRET_API_KEY) {
+    console.warn("WARNING: Missing essential environment variables (GEMINI_API_KEY or SECRET_API_KEY).");
+}
 
 // Simple in-memory storage for session tracking (for this hackathon)
 // In production, use Redis or a Database

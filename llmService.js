@@ -26,11 +26,28 @@ async function processMessage(message, history, metadata) {
 
     try {
         const result = await model.generateContent(prompt);
-        const text = result.response.text().replace(/```json|```/g, "").trim();
-        return JSON.parse(text);
+        const response = await result.response;
+        let text = response.text().replace(/```json|```/g, "").trim();
+
+        // Sometimes LLM might still return invalid JSON or extra text
+        try {
+            return JSON.parse(text);
+        } catch (e) {
+            console.log("JSON Parse Error, attempting to extract JSON from:", text);
+            const jsonMatch = text.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+                return JSON.parse(jsonMatch[0]);
+            }
+            throw e;
+        }
     } catch (error) {
         console.error("LLM Error:", error.message);
-        return { isScam: true, reply: "I'm not sure I understand, can you say that again?", isFinished: false };
+        // Return a safe default instead of hanging or crashing
+        return {
+            isScam: true,
+            reply: "I'm not sure I understand. My bank mentioned something about an update, is that what this is?",
+            isFinished: false
+        };
     }
 }
 
@@ -55,12 +72,11 @@ async function extractIntelligence(sessionId, history) {
 
     try {
         const result = await model.generateContent(prompt);
-        const response = result.response;
-        let text = response.text();
-        text = text.replace(/```json|```/g, "").trim();
+        const response = await result.response;
+        let text = response.text().replace(/```json|```/g, "").trim();
         return JSON.parse(text);
     } catch (error) {
-        console.error("Error in extractIntelligence:", error);
+        console.error("Error in extractIntelligence:", error.message);
         return null;
     }
 }

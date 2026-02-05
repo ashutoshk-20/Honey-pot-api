@@ -1,0 +1,9 @@
+node_modules
+npm-debug.log
+.env
+.git
+.gitignore
+README.md
+test_api.js
+debug_gemini.js
+test_sample.js
